@@ -1,5 +1,9 @@
 # Compiled class file
 *.class
+.idea/
+californium-master/
+*.iml
+*.properties
 
 # Log file
 *.log
