@@ -15,14 +15,14 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 public class ObserveServer extends CoapResource {
 
     private ArrayList<TempAndHumiditySensor> sensors = new ArrayList<>();
-    private StringBuilder builder = new StringBuilder();
     private String currentStatus;
     private int counter = 1;
+    private long messageCounter = 0;
 
     public ObserveServer(String name) {
         super(name);
         setObservable(true); // enable observing
-        setObserveType(Type.CON); // configure the notification type to CONs
+        setObserveType(Type.NON); // configure the notification type to CONs
         getAttributes().setObservable(); // mark observable in the Link-Format
 
         sensors.add(new TempAndHumiditySensor(1L));
@@ -38,7 +38,7 @@ public class ObserveServer extends CoapResource {
         public void run() {
             counter = counter % 2 == 0 ? 1 : 2;
             try {
-                currentStatus = System.currentTimeMillis() + "-" + sensors.get(counter-1).call();
+                currentStatus = System.currentTimeMillis() + "-" + messageCounter + "-" + sensors.get(counter-1).call();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -49,6 +49,7 @@ public class ObserveServer extends CoapResource {
     @Override
     public void handleGET(CoapExchange exchange) {
         exchange.setMaxAge(1); // the Max-Age value should match the update interval
+        messageCounter += 1;
         exchange.respond(currentStatus);
     }
 
