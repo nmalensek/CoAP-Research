@@ -16,8 +16,8 @@ public class ObserveServer extends CoapResource {
 
     private ArrayList<TempAndHumiditySensor> sensors = new ArrayList<>();
     private String currentStatus;
-    private int counter = 1;
-    private long messageCounter = 0;
+    private int alternator = 1;
+    private long messageCounter = 1;
 
     public ObserveServer(String name) {
         super(name);
@@ -36,9 +36,9 @@ public class ObserveServer extends CoapResource {
     private class UpdateTask extends TimerTask {
         @Override
         public void run() {
-            counter = counter % 2 == 0 ? 1 : 2;
+            alternator = alternator % 2 == 0 ? 1 : 2;
             try {
-                currentStatus = System.currentTimeMillis() + "-" + messageCounter + "-" + sensors.get(counter-1).call();
+                currentStatus = System.currentTimeMillis() + "-" + messageCounter + "-" + sensors.get(alternator-1).call();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -65,8 +65,16 @@ public class ObserveServer extends CoapResource {
         changed(); // notify all observers
     }
 
+    public String reportStatistics() {
+        return "Server " + this.getParent().getEndpoints().get(0).getAddress() + ": " + messageCounter + " messages sent.";
+    }
+
+    public long getMessageCounter() {
+        return messageCounter;
+    }
+
     public static void main(String[] args) {
-        CoapServer server = new CoapServer(5684);
+        CoapServer server = new CoapServer();
         server.add(new ObserveServer("obs"));
         server.start();
     }
