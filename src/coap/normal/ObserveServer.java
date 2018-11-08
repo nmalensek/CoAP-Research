@@ -30,7 +30,7 @@ public class ObserveServer extends CoapResource {
 
         // schedule a periodic update task, otherwise let events call changed()
         Timer timer = new Timer();
-        timer.schedule(new UpdateTask(), 0, 500);
+        timer.schedule(new UpdateTask(), 0, 1);
     }
 
     private class UpdateTask extends TimerTask {

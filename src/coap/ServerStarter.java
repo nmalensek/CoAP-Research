@@ -11,7 +11,14 @@ public class ServerStarter {
     static CoapServer[] serverArray = new CoapServer[] {
       new CoapServer(),
       new CoapServer(5684),
-      new CoapServer(5685)
+      new CoapServer(5685),
+      new CoapServer(5686),
+      new CoapServer(5687),
+      new CoapServer(5688),
+      new CoapServer(5689),
+      new CoapServer(5690),
+      new CoapServer(5691),
+      new CoapServer(5692),
     };
 
     public static void main(String[] args) {

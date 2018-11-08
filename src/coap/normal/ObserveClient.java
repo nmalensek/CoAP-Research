@@ -11,28 +11,42 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.core.network.EndpointManager;
 import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.network.stack.congestioncontrol.Cocoa;
+import org.eclipse.californium.core.network.stack.congestioncontrol.*;
 
 public class ObserveClient {
-    private static boolean cocoa;
     private long counter = 0;
-    private int[] portArray = new int[]{
-            5683,
-            5684,
-            5685
-    };
+    private static final int DEFAULT_PORT = 5683;
+    private static String serverAddress;
+    private static int numPorts;
 
-    public ObserveClient(boolean useCocoa) {
-        if (useCocoa) { setCocoaBackoff(); }
+    public ObserveClient(String congControl, int nStart) {
+        setUpClient(congControl, nStart);
+    }
+
+    private void setUpClient(String congestionControlAlg, int nStart) {
+        NetworkConfig config = new NetworkConfig().setInt(NetworkConfig.Keys.NSTART, nStart);
+        if (!congestionControlAlg.isEmpty()) {
+                    config
+                    // enable congestion control (can also be done cia Californium.properties)
+                    .setBoolean(NetworkConfig.Keys.USE_CONGESTION_CONTROL, true)
+                    // see class names in org.eclipse.californium.core.network.stack.congestioncontrol
+                    .setString(NetworkConfig.Keys.CONGESTION_CONTROL_ALGORITHM, congestionControlAlg);
+        }
+
+        // create an endpoint with this configuration
+        CoapEndpoint customEndpoint = new CoapEndpoint(config);
+        // all CoapClients will use the default endpoint (unless CoapClient#setEndpoint() is used)
+        EndpointManager.getEndpointManager().setDefaultEndpoint(customEndpoint);
     }
 
     private void startObserving() {
         CoapClient client = new CoapClient();
         System.out.println("OBSERVE (press enter to exit)");
+        int finalPort = DEFAULT_PORT + numPorts;
 
-        for (int i = 0; i < portArray.length; i++) {
+        for (int port = DEFAULT_PORT; port < finalPort; port++) {
 
-            client.setURI("coap://localhost:" + portArray[i] + "/obs");
+            client.setURI("coap://" + serverAddress + ":" + port + "/obs");
 
             CoapObserveRelation relation = client.observe(
                     new CoapHandler() {
@@ -59,29 +73,40 @@ public class ObserveClient {
         System.out.println("Messages successfully received: " + counter);
     }
 
-    private void setCocoaBackoff() {
-        NetworkConfig config = new NetworkConfig()
-                // enable congestion control (can also be done cia Californium.properties)
-                .setBoolean(NetworkConfig.Keys.USE_CONGESTION_CONTROL, true)
-                // see class names in org.eclipse.californium.core.network.stack.congestioncontrol
-                .setString(NetworkConfig.Keys.CONGESTION_CONTROL_ALGORITHM, Cocoa.class.getSimpleName())
-                // set NSTART to four
-                .setInt(NetworkConfig.Keys.NSTART, 4);
-
-        // create an endpoint with this configuration
-        CoapEndpoint cocoaEndpoint = new CoapEndpoint(config);
-        // all CoapClients will use the default endpoint (unless CoapClient#setEndpoint() is used)
-        EndpointManager.getEndpointManager().setDefaultEndpoint(cocoaEndpoint);
-    }
-
     public static void main(String[] args) throws IOException {
-        if (args.length > 0) {
-            cocoa = Boolean.parseBoolean(args[0]);
+        if (args.length == 0) {
+            System.out.println("Usage: [server IP address] [optional: congestion control algorithm name] " +
+                    "[NSTART value] [number of transmitting server ports]");
+            System.out.println("Congestion control options: cocoa, cocoaStrong, rto, linuxrto, peakrto, none");
+            System.exit(0);
         }
-        ObserveClient observeClient = new ObserveClient(cocoa);
+        serverAddress = args[0];
+        numPorts = Integer.parseInt(args[3]);
+        String congestionControl = "";
+         switch (args[1]) {
+             case "cocoa":
+                 congestionControl = Cocoa.class.getSimpleName();
+                 break;
+             case "cocoaStrong":
+                 congestionControl = CocoaStrong.class.getSimpleName();
+                 break;
+             case "rto":
+                 congestionControl = BasicRto.class.getSimpleName();
+                 break;
+             case "linuxrto":
+                 congestionControl = LinuxRto.class.getSimpleName();
+                 break;
+             case "peakrto":
+                 congestionControl = PeakhopperRto.class.getSimpleName();
+                 break;
+             case "none":
+                 break;
+         }
+        ObserveClient observeClient = new ObserveClient(congestionControl, Integer.parseInt(args[2]));
         observeClient.startObserving();
         observeClient.waitUntilFinished();
     }
+    //nstart default 4 for cocoa, 1 for "normal" in original code
 
 }
 // response.advanced().getRTT() and .getTimestamp() don't work in observe mode; they return the relationship's duration (initial GET
