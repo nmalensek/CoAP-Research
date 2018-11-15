@@ -4,32 +4,29 @@ import coap.normal.ObserveServer;
 import org.eclipse.californium.core.CoapServer;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class ServerStarter {
 
-    static CoapServer[] serverArray = new CoapServer[] {
-      new CoapServer(),
-      new CoapServer(5684),
-      new CoapServer(5685),
-      new CoapServer(5686),
-      new CoapServer(5687),
-      new CoapServer(5688),
-      new CoapServer(5689),
-      new CoapServer(5690),
-      new CoapServer(5691),
-      new CoapServer(5692),
-    };
+    private static final int START_PORT = 5683;
+    private static ArrayList<CoapServer> serverList = new ArrayList<>();
 
     public static void main(String[] args) {
-        for (CoapServer s : serverArray) {
-            s.add(new ObserveServer("obs"));
-            s.start();
+        int numServers = Integer.parseInt(args[0]);
+        int messageInterval = Integer.parseInt(args[1]);
+        int finalPort = START_PORT + numServers;
+
+        for (int i = START_PORT; i < finalPort; i++) {
+            CoapServer s = new CoapServer(i);
+            serverList.add(s);
+            s.add(new ObserveServer("obs", messageInterval))
+                    .start();
         }
         Scanner scanner = new Scanner(new InputStreamReader(System.in));
         scanner.next();
         long totalMessages = 0;
-        for (CoapServer s : serverArray) {
+        for (CoapServer s : serverList) {
             s.stop();
             ObserveServer observeServer = (ObserveServer) s.getRoot().getChild("obs");
             totalMessages += observeServer.getMessageCounter();

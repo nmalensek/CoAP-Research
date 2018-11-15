@@ -19,7 +19,7 @@ public class ObserveServer extends CoapResource {
     private int alternator = 1;
     private long messageCounter = 1;
 
-    public ObserveServer(String name) {
+    public ObserveServer(String name, int interval) {
         super(name);
         setObservable(true); // enable observing
         setObserveType(Type.NON); // configure the notification type to CONs
@@ -30,7 +30,7 @@ public class ObserveServer extends CoapResource {
 
         // schedule a periodic update task, otherwise let events call changed()
         Timer timer = new Timer();
-        timer.schedule(new UpdateTask(), 0, 1);
+        timer.schedule(new UpdateTask(), 0, interval);
     }
 
     private class UpdateTask extends TimerTask {
@@ -75,7 +75,7 @@ public class ObserveServer extends CoapResource {
 
     public static void main(String[] args) {
         CoapServer server = new CoapServer();
-        server.add(new ObserveServer("obs"));
+        server.add(new ObserveServer("obs", 1));
         server.start();
     }
 

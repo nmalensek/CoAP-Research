@@ -4,7 +4,8 @@
 californium-master/
 *.iml
 *.properties
-
+*.MF
+out/artifacts/CoAP_Research_jar/
 # Log file
 *.log
 
