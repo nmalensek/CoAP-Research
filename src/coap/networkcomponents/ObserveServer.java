@@ -1,4 +1,4 @@
-package coap.normal;
+package coap.networkcomponents;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.*;
 
@@ -22,7 +22,8 @@ public class ObserveServer extends CoapResource {
     public ObserveServer(String name, int interval) {
         super(name);
         setObservable(true); // enable observing
-        setObserveType(Type.NON); // configure the notification type to CONs
+        // configure the notification type to NONs - framework will automatically promote packets to CONs on occasion
+        setObserveType(Type.NON);
         getAttributes().setObservable(); // mark observable in the Link-Format
 
         sensors.add(new TempAndHumiditySensor(1L));

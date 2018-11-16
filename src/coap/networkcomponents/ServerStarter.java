@@ -1,6 +1,5 @@
-package coap;
+package coap.networkcomponents;
 
-import coap.normal.ObserveServer;
 import org.eclipse.californium.core.CoapServer;
 
 import java.io.InputStreamReader;

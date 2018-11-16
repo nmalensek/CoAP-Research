@@ -1,9 +1,10 @@
-package coap.normal;
+package coap.networkcomponents;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import coap.util.ResultWriter;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -15,9 +16,11 @@ import org.eclipse.californium.core.network.stack.congestioncontrol.*;
 
 public class ObserveClient {
     private long counter = 0;
+    private long latencyCounter = 0;
     private static final int DEFAULT_PORT = 5683;
     private static String serverAddress;
     private static int numPorts;
+    private ResultWriter resultWriter;
 
     public ObserveClient(String congControl, int nStart) {
         setUpClient(congControl, nStart);
@@ -37,6 +40,9 @@ public class ObserveClient {
         CoapEndpoint customEndpoint = new CoapEndpoint(config);
         // all CoapClients will use the default endpoint (unless CoapClient#setEndpoint() is used)
         EndpointManager.getEndpointManager().setDefaultEndpoint(customEndpoint);
+
+        resultWriter = new ResultWriter(this);
+        resultWriter.start();
     }
 
     private void startObserving() {
@@ -53,9 +59,13 @@ public class ObserveClient {
                         @Override
                         public void onLoad(CoapResponse response) {
                             String content = response.getResponseText();
+                            long latency = (System.currentTimeMillis() - Long.parseLong(content.split("-")[0]));
                             System.out.println("SERVER" + response.advanced().getSourcePort() + ": " + content + "\t" + "|" + "\t" +
-                                    "Latency: " + (System.currentTimeMillis() - Long.parseLong(content.split("-")[0])));
-                            counter += 1;
+                                    "Latency: " + latency);
+                            counter++;
+                            latencyCounter += latency;
+                            resultWriter.addMessage();
+                            resultWriter.addLatency(latency);
                         }
 
                         @Override
@@ -70,7 +80,10 @@ public class ObserveClient {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         br.readLine();
+        resultWriter.setRunning(false);
+        resultWriter.reportStats();
         System.out.println("Messages successfully received: " + counter);
+        System.out.println("With an average latency per message of " + (latencyCounter / counter));
     }
 
     public static void main(String[] args) throws IOException {
