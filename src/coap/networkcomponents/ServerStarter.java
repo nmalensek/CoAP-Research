@@ -12,6 +12,11 @@ public class ServerStarter {
     private static ArrayList<CoapServer> serverList = new ArrayList<>();
 
     public static void main(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Usage: [number of servers] [message publish frequency in ms]");
+            System.exit(0);
+        }
+
         int numServers = Integer.parseInt(args[0]);
         int messageInterval = Integer.parseInt(args[1]);
         int finalPort = START_PORT + numServers;

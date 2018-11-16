@@ -30,7 +30,7 @@ public class ObserveClient {
         NetworkConfig config = new NetworkConfig().setInt(NetworkConfig.Keys.NSTART, nStart);
         if (!congestionControlAlg.isEmpty()) {
                     config
-                    // enable congestion control (can also be done cia Californium.properties)
+                    // enable congestion control (can also be done via Californium.properties)
                     .setBoolean(NetworkConfig.Keys.USE_CONGESTION_CONTROL, true)
                     // see class names in org.eclipse.californium.core.network.stack.congestioncontrol
                     .setString(NetworkConfig.Keys.CONGESTION_CONTROL_ALGORITHM, congestionControlAlg);
@@ -124,3 +124,6 @@ public class ObserveClient {
 }
 // response.advanced().getRTT() and .getTimestamp() don't work in observe mode; they return the relationship's duration (initial GET
 // is used as the start of the RTT counter or timestamp).
+
+//nstart is the maximum number of outstanding notification/response a server can have pending for a client. Only
+//n messages may be sent per RTT.

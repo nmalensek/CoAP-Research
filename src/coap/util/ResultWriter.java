@@ -15,6 +15,8 @@ public class ResultWriter extends Thread {
     private ObserveClient parent;
     private long totalMessages;
     private long totalLatency;
+    private long previousTotalMessages = 0;
+    private long previousTotalLatency = 0;
 
     public ResultWriter(ObserveClient parent) {
         this.parent = parent;
@@ -35,19 +37,16 @@ public class ResultWriter extends Thread {
     @Override
     public void run() {
         while (running) {
-//            String element = resultQueue.poll();
-//            if (element != null) {
-//                writeResults(element);
-//            }
+            try {
+                Thread.sleep(100);
+                long snapShot = totalMessages - previousTotalMessages;
+                long latencySnapShot = totalLatency - previousTotalLatency;
+                long averageLatency = calculateLatency(snapShot, latencySnapShot);
+                writeResults(snapShot + "," + latencySnapShot + "," + averageLatency);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-//        try {
-//            Thread.sleep(100);
-//            while (!resultQueue.isEmpty()) {
-//                writeResults(resultQueue.poll());
-//            }
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
     public ConcurrentLinkedQueue<String> getResultQueue() {
@@ -64,6 +63,11 @@ public class ResultWriter extends Thread {
 
     public synchronized void addLatency(long addition) {
         totalLatency += addition;
+    }
+
+    private long calculateLatency(long messages, long latency) {
+        if (messages == 0 ) { return 0; }
+        return latency / messages;
     }
 
     public void reportStats() {
