@@ -1,9 +1,6 @@
 package coap.networkcomponents;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
+import coap.util.ProcessTimer;
 import coap.util.ResultWriter;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
@@ -14,15 +11,18 @@ import org.eclipse.californium.core.network.EndpointManager;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.network.stack.congestioncontrol.*;
 
-public class ObserveClient {
+public class ObserveClient implements TimedComponent {
     private long counter = 0;
     private long latencyCounter = 0;
     private static final int DEFAULT_PORT = 5683;
     private static String serverAddress;
     private static int numPorts;
     private ResultWriter resultWriter;
+    private ProcessTimer timer;
+    private long duration;
 
-    public ObserveClient(String congControl, int nStart) {
+    public ObserveClient(String congControl, int nStart, long duration) {
+        this.duration = duration;
         setUpClient(congControl, nStart);
     }
 
@@ -43,11 +43,12 @@ public class ObserveClient {
 
         resultWriter = new ResultWriter(this);
         resultWriter.start();
+        timer = new ProcessTimer(duration, this);
+        timer.start();
     }
 
     private void startObserving() {
         CoapClient client = new CoapClient();
-        System.out.println("OBSERVE (press enter to exit)");
         int finalPort = DEFAULT_PORT + numPorts;
 
         for (int port = DEFAULT_PORT; port < finalPort; port++) {
@@ -76,20 +77,24 @@ public class ObserveClient {
         }
     }
 
-    private void waitUntilFinished() throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    @Override
+    public void start() {
 
-        br.readLine();
+    }
+
+    @Override
+    public void stop() {
         resultWriter.setRunning(false);
         resultWriter.reportStats();
         System.out.println("Messages successfully received: " + counter);
         System.out.println("With an average latency per message of " + (latencyCounter / counter));
+        System.exit(0);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length == 0) {
             System.out.println("Usage: [server IP address] [optional: congestion control algorithm name] " +
-                    "[NSTART value] [number of transmitting server ports]");
+                    "[NSTART value] [number of transmitting server ports] [run duration (in ms)]");
             System.out.println("Congestion control options: cocoa, cocoaStrong, rto, linuxrto, peakrto, none");
             System.exit(0);
         }
@@ -115,9 +120,8 @@ public class ObserveClient {
              case "none":
                  break;
          }
-        ObserveClient observeClient = new ObserveClient(congestionControl, Integer.parseInt(args[2]));
+        ObserveClient observeClient = new ObserveClient(congestionControl, Integer.parseInt(args[2]), Long.parseLong(args[4]));
         observeClient.startObserving();
-        observeClient.waitUntilFinished();
     }
     //nstart default 4 for cocoa, 1 for "normal" in original code
 
