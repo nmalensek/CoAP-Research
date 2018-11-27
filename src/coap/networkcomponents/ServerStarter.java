@@ -24,13 +24,13 @@ public class ServerStarter implements TimedComponent{
     @Override
     public void start() {
         int finalPort = START_PORT + numServers;
-
         for (int i = START_PORT; i < finalPort; i++) {
             CoapServer s = new CoapServer(i);
             serverList.add(s);
             s.add(new ObserveServer("obs", messageInterval))
                     .start();
         }
+
         timer = new ProcessTimer(duration, this);
         timer.start();
     }
@@ -48,8 +48,9 @@ public class ServerStarter implements TimedComponent{
     }
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage: [number of servers] [message publish frequency in ms] [process duration (in ms)");
+        if (args.length != 4) {
+            System.out.println("Usage: [number of servers] [message publish frequency in ms] " +
+                    "[process duration (in ms)]");
             System.exit(0);
         }
         int numServers = Integer.parseInt(args[0]);

@@ -61,8 +61,6 @@ public class ObserveClient implements TimedComponent {
                         public void onLoad(CoapResponse response) {
                             String content = response.getResponseText();
                             long latency = (System.currentTimeMillis() - Long.parseLong(content.split("-")[0]));
-                            System.out.println("SERVER" + response.advanced().getSourcePort() + ": " + content + "\t" + "|" + "\t" +
-                                    "Latency: " + latency);
                             counter++;
                             latencyCounter += latency;
                             resultWriter.addMessage();

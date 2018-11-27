@@ -15,8 +15,6 @@ public class ResultWriter extends Thread {
     private ObserveClient parent;
     private long totalMessages;
     private long totalLatency;
-    private long previousTotalMessages = 0;
-    private long previousTotalLatency = 0;
 
     public ResultWriter(ObserveClient parent) {
         this.parent = parent;
@@ -36,13 +34,19 @@ public class ResultWriter extends Thread {
 
     @Override
     public void run() {
+        long previousTotalMessages = 0;
+        long previousTotalLatency = 0;
+
         while (running) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
                 long snapShot = totalMessages - previousTotalMessages;
                 long latencySnapShot = totalLatency - previousTotalLatency;
+                previousTotalMessages = totalMessages;
+                previousTotalLatency = totalLatency;
                 long averageLatency = calculateLatency(snapShot, latencySnapShot);
                 writeResults(snapShot + "," + latencySnapShot + "," + averageLatency);
+                reportStats(snapShot, averageLatency);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -70,9 +74,14 @@ public class ResultWriter extends Thread {
         return latency / messages;
     }
 
+    public void reportStats(long messagesInWindow, long latencyInWindow) {
+        System.out.println("This window: " + messagesInWindow + " messages, " +
+                latencyInWindow + " average latency");
+    }
+
     public void reportStats() {
         System.out.println("Received messages: " + totalMessages);
         System.out.println("Total latency: " + totalLatency);
-        System.out.println("Average latency: " + (totalLatency/totalMessages));
+        System.out.println("Average latency: " + calculateLatency(totalMessages, totalLatency));
     }
 }
