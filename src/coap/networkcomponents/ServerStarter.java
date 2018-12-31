@@ -48,7 +48,7 @@ public class ServerStarter implements TimedComponent{
     }
 
     public static void main(String[] args) {
-        if (args.length != 4) {
+        if (args.length != 3) {
             System.out.println("Usage: [number of servers] [message publish frequency in ms] " +
                     "[process duration (in ms)]");
             System.exit(0);
