@@ -1,7 +1,7 @@
 # CoAP-Research
 
 NOTE: this implementation drops 0.1% of all packets. To disable this, comment
-out lines lines 302-308 in the org.eclipse.californium.core.network.UdpMatcher
+out lines 302-308 in the org.eclipse.californium.core.network.UdpMatcher
 class.
 
 The ServerStarter class is used to start up ObserveServers with pre-defined resources
